@@ -58,7 +58,16 @@ async def ingest_source(ctx: AppContext, payload: dict):
     # Process text
     if file_path and file_path.endswith('.pdf'):
         content = parse_pdf(file_path)
+    elif file_path and os.path.exists(file_path):
+        try:
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                content = f.read()
+        except Exception as e:
+            print(f"Text read error: {e}")
+            content = ""
     else:
+        content = ""
+    if not content.strip():
         # Fallback text
         content = "Sample text content."
         
@@ -76,11 +85,15 @@ async def ingest_source(ctx: AppContext, payload: dict):
             origin="educator"
         )
         ctx.course_db.add(chunk)
-        # FTS5 insert
-        ctx.course_db.execute(
-            text("INSERT INTO material_chunks_fts(rowid, text) VALUES(:rowid, :text)"),
-            {"rowid": chunk.id, "text": c_text}
-        )
+        # FTS5 insert (best-effort)
+        try:
+            with ctx.course_db.begin_nested():
+                ctx.course_db.execute(
+                    text("INSERT INTO material_chunks_fts(text) VALUES(:text)"),
+                    {"text": c_text}
+                )
+        except Exception as e:
+            print(f"FTS index skipped: {e}")
         
     mat.status = "ready"
     ctx.course_db.commit()

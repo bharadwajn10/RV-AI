@@ -1,0 +1,1 @@
+Binary trees have at most two children per node.

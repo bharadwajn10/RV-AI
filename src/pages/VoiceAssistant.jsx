@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useCourses } from '../context/useCourses.js'
 import { voiceTutorCourses } from '../data/voiceTutorData.js'
 import './VoiceAssistant.css'
@@ -40,6 +40,23 @@ const initialMessages = [
 const initialRecentSession = {
   subject: 'Data Structures',
   topics: ['Binary Trees', 'BST'],
+}
+
+const SpeechRecognitionAPI = typeof window !== 'undefined'
+  ? window.SpeechRecognition || window.webkitSpeechRecognition
+  : null
+
+const speechLangCodes = { English: 'en-IN', Kannada: 'kn-IN', Hindi: 'hi-IN', 'Other (English demo)': 'en-IN' }
+
+function speak(text, language, onEnd) {
+  if (!('speechSynthesis' in window) || !text) return
+  window.speechSynthesis.cancel()
+  const utterance = new SpeechSynthesisUtterance(text)
+  utterance.lang = speechLangCodes[language] || 'en-IN'
+  utterance.rate = 1
+  utterance.onend = onEnd
+  utterance.onerror = onEnd
+  window.speechSynthesis.speak(utterance)
 }
 
 const stateLabels = {
@@ -250,21 +267,130 @@ function VoiceAssistant() {
   const relevantMaterials = [...new Set(selectedTopics.flatMap((topic) => topic.materials))]
   const displayedMaterials = relevantMaterials.slice(0, 4)
 
-  useEffect(() => {
-    if (interactionState !== 'processing') return undefined
+  const recognitionRef = useRef(null)
+  const transcriptRef = useRef('')
+  const [liveTranscript, setLiveTranscript] = useState('')
+  const [micError, setMicError] = useState('')
 
-    const timer = window.setTimeout(() => setInteractionState('response'), 1000)
-    return () => window.clearTimeout(timer)
-  }, [interactionState])
+  useEffect(() => () => {
+    recognitionRef.current?.abort()
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel()
+  }, [])
 
-  function handleMicrophoneClick() {
-    if (interactionState === 'idle' || interactionState === 'response') {
-      setInteractionState('listening')
+  async function askTutor(question) {
+    if (!question || !activeSession) return
+    let tutorIndex = -1
+    setMessages((currentMessages) => {
+      tutorIndex = currentMessages.length + 1
+      return [
+        ...currentMessages,
+        { role: 'student', speaker: 'You', message: question },
+        { role: 'tutor', speaker: 'Voice Tutor', message: '' },
+      ]
+    })
+    setInteractionState('processing')
+    setHelpful(null)
+
+    const setTutorText = (updater) => setMessages((msgs) => {
+      const next = [...msgs]
+      const idx = tutorIndex >= 0 ? tutorIndex : next.length - 1
+      next[idx] = { ...next[idx], message: updater(next[idx].message) }
+      return next
+    })
+
+    let fullText = ''
+    try {
+      const { sendVoiceTurn } = await import('../api.js')
+      await sendVoiceTurn(activeSession.topics[0], question, (chunk) => {
+        fullText += chunk
+        setInteractionState('response')
+        setTutorText((prev) => prev + chunk)
+      })
+    } catch (err) {
+      console.error('Voice turn failed:', err)
+    }
+
+    // Offline fallback: if the backend/LLM is unreachable, answer from local materials.
+    if (!fullText.trim() || fullText.startsWith('Sorry, I couldn')) {
+      fullText = buildTutorResponse(question, activeSession)
+      setTutorText(() => fullText)
+    }
+    setInteractionState('response')
+    setIsPlaying(true)
+    speak(fullText, activeSession.language, () => setIsPlaying(false))
+  }
+
+  function startListening() {
+    setMicError('')
+    if (!SpeechRecognitionAPI) {
+      setMicError('Voice input isn’t supported in this browser. Use Chrome or Edge, or type below.')
       return
     }
-    if (interactionState === 'listening') {
-      setInteractionState('processing')
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel()
+    setIsPlaying(false)
+
+    const recognition = new SpeechRecognitionAPI()
+    recognition.lang = speechLangCodes[activeSession?.language] || 'en-IN'
+    recognition.interimResults = true
+    recognition.continuous = true
+    transcriptRef.current = ''
+    setLiveTranscript('')
+
+    recognition.onresult = (event) => {
+      let text = ''
+      for (let i = 0; i < event.results.length; i += 1) {
+        text += event.results[i][0].transcript
+      }
+      transcriptRef.current = text
+      setLiveTranscript(text)
     }
+    recognition.onerror = (event) => {
+      const reasons = {
+        'not-allowed': 'Microphone permission was blocked. Allow mic access in the address bar and try again.',
+        'no-speech': 'I didn’t hear anything. Tap the mic and try again.',
+        'audio-capture': 'No microphone was found on this device.',
+        network: 'Speech recognition needs an internet connection.',
+      }
+      setMicError(reasons[event.error] || `Voice input error: ${event.error}`)
+    }
+    recognition.onend = () => {
+      recognitionRef.current = null
+      const spoken = transcriptRef.current.trim()
+      setLiveTranscript('')
+      if (spoken) {
+        askTutor(spoken)
+      } else {
+        setInteractionState((state) => (state === 'listening' ? 'idle' : state))
+      }
+    }
+
+    recognitionRef.current = recognition
+    try {
+      recognition.start()
+      setInteractionState('listening')
+    } catch (err) {
+      setMicError(`Couldn't start the microphone: ${err.message}`)
+    }
+  }
+
+  function handleMicrophoneClick() {
+    if (interactionState === 'listening') {
+      recognitionRef.current?.stop()
+      return
+    }
+    if (interactionState === 'idle' || interactionState === 'response') {
+      startListening()
+    }
+  }
+
+  function togglePlayback(text) {
+    if (isPlaying) {
+      window.speechSynthesis?.cancel()
+      setIsPlaying(false)
+      return
+    }
+    setIsPlaying(true)
+    speak(text, activeSession?.language || language, () => setIsPlaying(false))
   }
 
   function handleSubjectChange(event) {
@@ -317,36 +443,8 @@ function VoiceAssistant() {
     event.preventDefault()
     const question = followUp.trim()
     if (!question || !activeSession) return
-
-    const newMessageIndex = messages.length + 1
-    
-    setMessages((currentMessages) => [
-      ...currentMessages,
-      { role: 'student', speaker: 'You', message: question },
-      { role: 'tutor', speaker: 'Voice Tutor', message: '' }
-    ])
     setFollowUp('')
-    setInteractionState('processing')
-    
-    try {
-      const { sendVoiceTurn } = await import('../api.js')
-      await sendVoiceTurn(activeSession.topics[0], question, (chunk) => {
-        setInteractionState('response')
-        setMessages((msgs) => {
-          const newMsgs = [...msgs]
-          newMsgs[newMessageIndex].message += chunk
-          return newMsgs
-        })
-      })
-    } catch (err) {
-      console.error(err)
-      setInteractionState('response')
-      setMessages((msgs) => {
-        const newMsgs = [...msgs]
-        newMsgs[newMessageIndex].message = "Sorry, I couldn't connect to the backend API."
-        return newMsgs
-      })
-    }
+    await askTutor(question)
   }
 
   function handleModeChange(modeName) {
@@ -355,6 +453,9 @@ function VoiceAssistant() {
   }
 
   function changeTopics() {
+    recognitionRef.current?.abort()
+    window.speechSynthesis?.cancel()
+    setIsPlaying(false)
     setActiveSession(null)
     setInteractionState('idle')
     setFollowUp('')
@@ -551,13 +652,14 @@ function VoiceAssistant() {
             {!activeSession
               ? 'Choose a subject and topics to begin your session'
               : interactionState === 'listening'
-                ? 'This is a visual demo — no audio is recorded.'
+                ? (liveTranscript || 'Go ahead, I’m listening…')
                 : interactionState === 'processing'
-                  ? 'Preparing a sample tutor response'
+                  ? 'Asking your tutor…'
                   : interactionState === 'response'
-                    ? 'Mock conversation ready'
-                    : 'Your voice interaction will be simulated'}
+                    ? 'Tap the mic to ask another question'
+                    : 'Ask anything about your selected topics'}
           </span>
+          {micError && <span className="voice-mic-error" role="alert">{micError}</span>}
         </div>
         <div className="voice-waveform" aria-hidden="true">
           {[14, 22, 31, 18, 37, 24, 42, 21, 32, 17, 27, 13, 22, 35, 19, 29, 15].map((height, index) => (
@@ -590,7 +692,7 @@ function VoiceAssistant() {
                 key={`${message.role}-${index}`}
                 message={message}
                 onHelpful={setHelpful}
-                onPlay={() => setIsPlaying((playing) => !playing)}
+                onPlay={() => togglePlayback(message.message)}
               />
             ))}
           </div>

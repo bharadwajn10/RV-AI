@@ -1,23 +1,18 @@
-function Topbar({ onMenuClick }) {
+import "./Topbar.css";
+
+function Topbar({ title }) {
   return (
     <header className="topbar">
-      <button
-        aria-label="Open navigation menu"
-        className="menu-button"
-        onClick={onMenuClick}
-        type="button"
-      >
-        <span />
-        <span />
-        <span />
-      </button>
-      <div className="topbar-context">Your learning space</div>
-      <div className="topbar-account">
-        <span className="topbar-greeting">Welcome back</span>
-        <span aria-hidden="true" className="topbar-avatar">S</span>
+      <div>
+        <h1>{title}</h1>
+        <p>Educator Dashboard</p>
+      </div>
+
+      <div className="profile">
+        👩‍🏫 Educator
       </div>
     </header>
-  )
+  );
 }
 
-export default Topbar
+export default Topbar;

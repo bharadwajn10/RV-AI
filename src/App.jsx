@@ -63,14 +63,21 @@ function DashboardLayout() {
   )
 }
 
+import EducatorApp from './educator/App.jsx'
+
 function App() {
   return (
     <BrowserRouter>
-      <CourseProvider>
-        <TaskProvider>
-          <DashboardLayout />
-        </TaskProvider>
-      </CourseProvider>
+      <Routes>
+        <Route path="/educator/*" element={<EducatorApp />} />
+        <Route path="/*" element={
+          <CourseProvider>
+            <TaskProvider>
+              <DashboardLayout />
+            </TaskProvider>
+          </CourseProvider>
+        } />
+      </Routes>
     </BrowserRouter>
   )
 }

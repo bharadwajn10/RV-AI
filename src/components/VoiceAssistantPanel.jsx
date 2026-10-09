@@ -83,10 +83,10 @@ function VoiceAssistantPanel({ context, onClose, onOpenTutor }) {
       <header className="study-buddy-header">
         <span aria-hidden="true" className="study-buddy-avatar">✦</span>
         <div>
-          <h2 id="study-buddy-title">Study Buddy</h2>
+          <h2 id="study-buddy-title">Agnes</h2>
           <span>Your friendly learning companion</span>
         </div>
-        <button aria-label="Close Study Buddy" className="study-buddy-close" onClick={onClose} type="button">×</button>
+        <button aria-label="Close Agnes" className="study-buddy-close" onClick={onClose} type="button">×</button>
       </header>
 
       <div aria-live="polite" className="study-buddy-body">
@@ -130,7 +130,7 @@ function VoiceAssistantPanel({ context, onClose, onOpenTutor }) {
         </button>
 
         <form className="study-buddy-question-form" onSubmit={handleQuestionSubmit}>
-          <label className="visually-hidden" htmlFor="study-buddy-question">Ask Study Buddy anything</label>
+          <label className="visually-hidden" htmlFor="study-buddy-question">Ask Agnes anything</label>
           <input
             id="study-buddy-question"
             onChange={(event) => setQuestion(event.target.value)}

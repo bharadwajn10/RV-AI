@@ -1,0 +1,477 @@
+/* =====================================================
+   VoiceAssistantWidget.css — Unified Voice AI Widget
+   Themed for both Student (indigo/purple) and Educator (teal/green)
+   ===================================================== */
+
+/* ── Container ── */
+.vaw {
+  position: fixed;
+  z-index: 90;
+  right: 24px;
+  bottom: 24px;
+  display: grid;
+  justify-items: end;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.vaw > * {
+  pointer-events: auto;
+}
+
+/* ── Theme Variables ── */
+.vaw--student {
+  --vaw-accent: #5368d8;
+  --vaw-accent-hover: #4558c4;
+  --vaw-accent-light: #f7f8ff;
+  --vaw-accent-border: #eef0ff;
+  --vaw-accent-bg: linear-gradient(145deg, #a9b6f4, #8589e2 64%, #9b83dc);
+  --vaw-accent-shadow: rgba(100, 91, 174, 0.22);
+  --vaw-mic-bg: linear-gradient(145deg, #687bdf, #4f63cc);
+  --vaw-mic-listening: linear-gradient(145deg, #db6b6b, #c24b4b);
+  --vaw-bubble-assistant-bg: #f0f2ff;
+  --vaw-bubble-assistant-color: #344070;
+  --vaw-bubble-user-bg: #5368d8;
+}
+
+.vaw--educator {
+  --vaw-accent: #237d6e;
+  --vaw-accent-hover: #1a5f54;
+  --vaw-accent-light: #f2faf5;
+  --vaw-accent-border: #dce9e1;
+  --vaw-accent-bg: linear-gradient(145deg, #5dc4a8, #32917e 64%, #2a8270);
+  --vaw-accent-shadow: rgba(35, 125, 110, 0.22);
+  --vaw-mic-bg: linear-gradient(145deg, #32917e, #176c60);
+  --vaw-mic-listening: linear-gradient(145deg, #db7957, #b45135);
+  --vaw-bubble-assistant-bg: #f0f6f1;
+  --vaw-bubble-assistant-color: #344a3e;
+  --vaw-bubble-user-bg: #237d6e;
+}
+
+/* ── Launcher FAB ── */
+.vaw-launcher {
+  position: relative;
+  display: flex;
+  width: auto;
+  height: 52px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px 0 6px;
+  color: #fff;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 650;
+  background: var(--vaw-accent-bg);
+  border: 3px solid rgba(255, 255, 255, 0.88);
+  border-radius: 26px;
+  box-shadow: 0 6px 17px var(--vaw-accent-shadow), 0 0 0 1px rgba(129, 126, 218, 0.12);
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.vaw-launcher:hover {
+  box-shadow: 0 9px 23px var(--vaw-accent-shadow), 0 0 0 5px rgba(143, 137, 226, 0.12);
+  transform: translateY(-2px) scale(1.03);
+}
+
+.vaw-launcher.is-open {
+  border-radius: 50%;
+  width: 52px;
+  padding: 0;
+  justify-content: center;
+}
+
+.vaw-launcher.is-open .vaw-launcher__label {
+  display: none;
+}
+
+.vaw-launcher__icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  place-items: center;
+}
+
+.vaw-launcher__robot {
+  width: 38px;
+  height: 38px;
+  filter: drop-shadow(0 2px 2px rgba(67, 73, 130, 0.12));
+}
+
+.vaw-launcher__agnes {
+  font-size: 1.4rem;
+}
+
+/* ── Panel ── */
+.vaw-panel {
+  display: flex;
+  width: min(370px, calc(100vw - 32px));
+  height: min(520px, calc(100dvh - 110px));
+  min-height: 300px;
+  flex-direction: column;
+  overflow: hidden;
+  color: #344057;
+  background: #fff;
+  border: 1px solid #e5e8f0;
+  border-radius: 18px;
+  box-shadow: 0 18px 50px rgba(34, 45, 69, 0.18), 0 2px 8px rgba(34, 45, 69, 0.06);
+  animation: vaw-panel-in 180ms ease-out;
+}
+
+@keyframes vaw-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ── Header ── */
+.vaw-header {
+  display: flex;
+  min-height: 60px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #eef0f5;
+  background: var(--vaw-accent-light);
+}
+
+.vaw-header__identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vaw-avatar {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  place-items: center;
+  color: #fff;
+  font-size: 1rem;
+  background: var(--vaw-mic-bg);
+  border-radius: 11px;
+  box-shadow: 0 3px 7px var(--vaw-accent-shadow);
+}
+
+.vaw-header__identity > div {
+  display: grid;
+  gap: 2px;
+}
+
+.vaw-header__identity strong {
+  color: #303a50;
+  font-size: 0.82rem;
+}
+
+.vaw-header__identity > div > span {
+  color: #929aaa;
+  font-size: 0.65rem;
+}
+
+.vaw-header__actions {
+  display: flex;
+  gap: 5px;
+}
+
+.vaw-header__reset,
+.vaw-header__close {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  place-items: center;
+  color: #788397;
+  font-size: 1.1rem;
+  line-height: 1;
+  background: #f3f4f7;
+  border: 1px solid #eceef3;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: color 120ms ease, background 120ms ease;
+}
+
+.vaw-header__reset:hover,
+.vaw-header__close:hover {
+  color: var(--vaw-accent);
+  background: var(--vaw-accent-light);
+}
+
+/* ── Messages ── */
+.vaw-messages {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  padding: 14px;
+}
+
+.vaw-welcome {
+  margin: auto 0;
+  padding: 18px;
+  border-radius: 14px;
+  background: var(--vaw-accent-light);
+  color: #314b40;
+  text-align: center;
+}
+
+.vaw-welcome strong {
+  font-size: 0.88rem;
+}
+
+.vaw-welcome p {
+  margin: 6px 0 0;
+  color: #697c71;
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.vaw-bubble {
+  position: relative;
+  max-width: 85%;
+  padding: 9px 12px;
+  border-radius: 14px;
+  font-size: 0.79rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.vaw-bubble p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.vaw-bubble--assistant {
+  align-self: flex-start;
+  padding-right: 36px;
+  border-bottom-left-radius: 5px;
+  background: var(--vaw-bubble-assistant-bg);
+  color: var(--vaw-bubble-assistant-color);
+}
+
+.vaw-bubble--user {
+  align-self: flex-end;
+  border-bottom-right-radius: 5px;
+  background: var(--vaw-bubble-user-bg);
+  color: #fff;
+}
+
+.vaw-bubble--streaming {
+  opacity: 0.85;
+}
+
+.vaw-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  background: var(--vaw-accent);
+  animation: vaw-blink 600ms steps(2) infinite;
+  vertical-align: text-bottom;
+}
+
+@keyframes vaw-blink {
+  50% { opacity: 0; }
+}
+
+.vaw-bubble__speak {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+  font-size: 0.7rem;
+  transition: background 120ms;
+}
+
+.vaw-bubble__speak:hover {
+  background: rgba(255, 255, 255, 1);
+}
+
+/* ── Error Notice ── */
+.vaw-notice {
+  margin: 0;
+  padding: 6px 14px;
+  color: #985d2e;
+  font-size: 0.7rem;
+  line-height: 1.4;
+  background: #fef7f0;
+  border-top: 1px solid #f5e6d3;
+}
+
+/* ── Voice Controls ── */
+.vaw-controls {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px 10px;
+  border-top: 1px solid #eef0f5;
+  text-align: center;
+}
+
+.vaw-mic-button {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: var(--vaw-mic-bg);
+  box-shadow: 0 6px 16px var(--vaw-accent-shadow);
+  color: #fff;
+  cursor: pointer;
+  font-size: 1.3rem;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.vaw-mic-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 9px 20px var(--vaw-accent-shadow);
+}
+
+.vaw-mic-button.is-listening {
+  background: var(--vaw-mic-listening);
+  box-shadow: 0 0 0 6px rgba(181, 93, 53, 0.12);
+  animation: vaw-pulse 1s ease-in-out infinite;
+}
+
+.vaw-mic-button.is-speaking {
+  background: linear-gradient(145deg, #e74c3c, #c0392b);
+  box-shadow: 0 0 0 6px rgba(231, 76, 60, 0.15);
+  animation: vaw-speak-pulse 1.2s ease-in-out infinite;
+}
+
+.vaw-mic-button.is-processing {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.vaw-mic-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+@keyframes vaw-speak-pulse {
+  0%, 100% { box-shadow: 0 0 0 6px rgba(231, 76, 60, 0.15); }
+  50% { box-shadow: 0 0 0 12px rgba(231, 76, 60, 0.06); }
+}
+
+@keyframes vaw-pulse {
+  50% {
+    box-shadow: 0 0 0 10px rgba(181, 93, 53, 0.06);
+  }
+}
+
+.vaw-controls > strong {
+  color: #354d42;
+  font-size: 0.72rem;
+}
+
+.vaw-controls > span {
+  color: #7b8980;
+  font-size: 0.65rem;
+}
+
+.vaw-text-toggle {
+  padding: 3px 6px;
+  border: 0;
+  background: transparent;
+  color: var(--vaw-accent);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ── Text Composer ── */
+.vaw-composer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid #eef0f5;
+}
+
+.vaw-composer input {
+  width: 0;
+  min-width: 0;
+  height: 38px;
+  flex: 1;
+  padding: 0 12px;
+  color: #344057;
+  font: inherit;
+  font-size: 0.78rem;
+  background: #f8f9fb;
+  border: 1px solid #e0e4ea;
+  border-radius: 12px;
+  outline: none;
+}
+
+.vaw-composer input:focus {
+  border-color: var(--vaw-accent);
+  box-shadow: 0 0 0 3px rgba(83, 104, 216, 0.1);
+}
+
+.vaw-send {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  place-items: center;
+  border: 0;
+  border-radius: 12px;
+  background: var(--vaw-accent);
+  color: #fff;
+  cursor: pointer;
+  font-size: 1.15rem;
+  font-weight: 700;
+  transition: opacity 120ms;
+}
+
+.vaw-send:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .vaw {
+    right: 14px;
+    bottom: max(14px, env(safe-area-inset-bottom));
+  }
+
+  .vaw-panel {
+    width: min(360px, calc(100vw - 24px));
+    height: min(480px, calc(100dvh - 96px - env(safe-area-inset-bottom)));
+  }
+
+  .vaw-launcher {
+    height: 48px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vaw *,
+  .vaw *::before,
+  .vaw *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

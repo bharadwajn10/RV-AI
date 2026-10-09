@@ -139,7 +139,7 @@ function VoiceAssistantBubble() {
       )}
       <button
         aria-expanded={isOpen}
-        aria-label={isOpen ? 'Close Study Buddy' : 'Talk to Study Buddy'}
+        aria-label={isOpen ? 'Close Agnes' : 'Talk to Agnes'}
         className={`voice-assistant-bubble-button${isOpen ? ' is-open' : ''}`}
         onClick={() => setIsOpen((open) => !open)}
         type="button"

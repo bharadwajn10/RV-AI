@@ -1,0 +1,45 @@
+.topbar {
+  min-height: 90px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 28px;
+  box-shadow: 0 18px 30px rgba(15, 23, 42, 0.04);
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: clamp(1.8rem, 1.5rem + 0.75vw, 2.4rem);
+  letter-spacing: -0.06em;
+  color: #0f172a;
+}
+
+.topbar p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile {
+  margin-left: 8px;
+  font-weight: 700;
+  color: #334155;
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 10px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.03);
+}

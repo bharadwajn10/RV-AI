@@ -446,6 +446,23 @@
   box-shadow: 0 9px 20px rgb(201 88 117 / 24%), 0 0 0 1px rgb(201 88 117 / 8%);
 }
 
+.microphone-speaking {
+  background: linear-gradient(145deg, #e74c3c, #c0392b);
+  box-shadow: 0 9px 20px rgba(231, 76, 60, 0.35), 0 0 0 1px rgba(231, 76, 60, 0.2);
+  animation: microphone-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes microphone-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 9px 20px rgba(231, 76, 60, 0.35), 0 0 0 0 rgba(231, 76, 60, 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 12px 25px rgba(231, 76, 60, 0.45), 0 0 0 8px rgba(231, 76, 60, 0);
+  }
+}
+
 .microphone-processing {
   background: linear-gradient(145deg, #8791da, #6774c9);
 }

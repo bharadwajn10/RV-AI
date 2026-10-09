@@ -1,0 +1,47 @@
+export const analyticsReport = {
+  className: "Biology A",
+  subject: "Biology",
+  reportingPeriod: "September – October",
+  scoreThreshold: 70,
+  checkpoints: [
+    { id: "cell-theory", label: "Cell theory" },
+    { id: "microscopy", label: "Microscopy" },
+    { id: "cell-structures", label: "Cell structures" },
+    { id: "photosynthesis", label: "Photosynthesis" },
+    { id: "current", label: "Current" },
+  ],
+  students: [
+    {
+      id: "student-001",
+      name: "Maya Patel",
+      scores: [70, 76, 82, 79, 82],
+      attendance: 96,
+      status: "On track",
+      focus: "Photosynthesis",
+    },
+    {
+      id: "student-002",
+      name: "Leo Chen",
+      scores: [70, 64, 65, 69, 67],
+      attendance: 88,
+      status: "Needs support",
+      focus: "Photosynthesis",
+    },
+    {
+      id: "student-003",
+      name: "Ava Johnson",
+      scores: [73, 81, 90, 88, 91],
+      attendance: 99,
+      status: "Excelling",
+      focus: "Extension activities",
+    },
+    {
+      id: "student-004",
+      name: "Noah Williams",
+      scores: [66, 71, 73, 70, 74],
+      attendance: 92,
+      status: "On track",
+      focus: "Cellular respiration",
+    },
+  ],
+};

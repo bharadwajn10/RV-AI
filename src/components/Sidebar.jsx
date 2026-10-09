@@ -4,7 +4,7 @@ const navigationItems = [
   { label: 'Dashboard', to: '/dashboard', icon: 'dashboard' },
   { label: 'Subjects', to: '/subjects', icon: 'subjects' },
   { label: 'Calendar', to: '/calendar', icon: 'calendar' },
-  { label: 'Voice assistant', to: '/voice', icon: 'voice' },
+  { label: 'Agnes', to: '/voice', icon: 'voice' },
   { label: 'Flashcards', to: '/flashcards', icon: 'flashcards' },
   { label: 'Games', to: '/games', icon: 'games' },
   { label: 'Exam Prep', to: '/exam', icon: 'progress' },

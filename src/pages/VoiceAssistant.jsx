@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useCourses } from '../context/useCourses.js'
 import { voiceTutorCourses } from '../data/voiceTutorData.js'
+import { VoiceSession } from '../services/voiceService.js'
 import './VoiceAssistant.css'
 
 const voiceModes = [
@@ -31,7 +32,7 @@ const initialMessages = [
   { role: 'student', speaker: 'You', message: 'What is a binary tree?' },
   {
     role: 'tutor',
-    speaker: 'Voice Tutor',
+    speaker: 'Agnes',
     message:
       'A binary tree is a data structure where each node can have at most two children, often called the left child and right child. Imagine it like a family tree that branches into two paths at each step.',
   },
@@ -44,8 +45,9 @@ const initialRecentSession = {
 
 const stateLabels = {
   idle: 'Tap the microphone to speak',
-  listening: 'Listening… tap again when you’re done',
-  processing: 'Thinking through your question…',
+  listening: 'Listening… will auto-send after 2s silence',
+  processing: 'Agnes is thinking…',
+  speaking: 'Agnes is speaking… tap to stop',
   response: 'Here’s your explanation',
 }
 
@@ -77,7 +79,7 @@ function ConversationMessage({ message, onPlay, isPlaying, helpful, onHelpful })
       <div className="message-content">
         <div className="message-speaker">
           {message.speaker}
-          {isTutor && <span className="ai-badge">MOCK TUTOR</span>}
+          {isTutor && <span className="ai-badge">AGNES AI</span>}
         </div>
         <p>{message.message}</p>
         {isTutor && (
@@ -233,6 +235,7 @@ function VoiceAssistant() {
   const [activeMode, setActiveMode] = useState('Explain')
   const [helpful, setHelpful] = useState(null)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [isSpeaking, setIsSpeaking] = useState(false)
   const [followUp, setFollowUp] = useState('')
   const [subjectId, setSubjectId] = useState('')
   const [selectedTopicNames, setSelectedTopicNames] = useState([])
@@ -243,6 +246,8 @@ function VoiceAssistant() {
   const [activeSession, setActiveSession] = useState(null)
   const [recentSession, setRecentSession] = useState(initialRecentSession)
   const [messages, setMessages] = useState(initialMessages)
+  const [streamingText, setStreamingText] = useState('')
+  const [error, setError] = useState('')
 
   const selectedCourse = availableCourses.find((course) => course.id === subjectId)
   const availableTopics = selectedCourse ? voiceTutorCourses[selectedCourse.id]?.topics || [] : []
@@ -250,20 +255,34 @@ function VoiceAssistant() {
   const relevantMaterials = [...new Set(selectedTopics.flatMap((topic) => topic.materials))]
   const displayedMaterials = relevantMaterials.slice(0, 4)
 
-  useEffect(() => {
-    if (interactionState !== 'processing') return undefined
+  const sessionRef = useRef(null)
 
-    const timer = window.setTimeout(() => setInteractionState('response'), 1000)
-    return () => window.clearTimeout(timer)
-  }, [interactionState])
+  // Cleanup session on unmount
+  useEffect(() => {
+    return () => {
+      sessionRef.current?.disconnect()
+    }
+  }, [])
+
+  function askAssistant(question) {
+    if (!question || !sessionRef.current) return
+    sessionRef.current.sendMessage(question)
+  }
 
   function handleMicrophoneClick() {
-    if (interactionState === 'idle' || interactionState === 'response') {
-      setInteractionState('listening')
+    const session = sessionRef.current
+    if (!session) return
+    
+    // If AI is speaking, stop it
+    if (session.isSpeaking) {
+      session.stopSpeaking()
       return
     }
-    if (interactionState === 'listening') {
-      setInteractionState('processing')
+    
+    if (session.isListening) {
+      session.stopListening()
+    } else {
+      session.startListening()
     }
   }
 
@@ -282,7 +301,7 @@ function VoiceAssistant() {
 
   function startSession() {
     if (!selectedCourse || selectedTopics.length === 0) return
-    const session = {
+    const sessionConfig = {
       subject: selectedCourse.name,
       subjectId: selectedCourse.id,
       topics: selectedTopics.map((topic) => topic.topic),
@@ -293,42 +312,74 @@ function VoiceAssistant() {
       language,
       mode: activeMode,
     }
-    const firstTopic = session.topics[0]
-    setActiveSession(session)
-    setRecentSession(session)
-    setMessages([
-      {
-        role: 'student',
-        speaker: 'You',
-        message: `What should I know about ${firstTopic}?`,
-      },
-      {
-        role: 'tutor',
-        speaker: 'Voice Tutor',
-        message: buildTutorResponse(`What should I know about ${firstTopic}?`, session),
-      },
-    ])
-    setInteractionState('idle')
+    const firstTopic = sessionConfig.topics[0]
+    setActiveSession(sessionConfig)
+    setRecentSession(sessionConfig)
+    
+    setMessages([{ role: 'student', speaker: 'You', message: `What should I know about ${firstTopic}?` }])
+    setStreamingText('')
+    setError('')
     setHelpful(null)
     setIsPlaying(false)
+    setInteractionState('processing')
+    
+    if (sessionRef.current) {
+      sessionRef.current.disconnect()
+      sessionRef.current = null
+    }
+    
+    const session = new VoiceSession({
+      role: 'student',
+      userId: 'student-1',
+      context: sessionConfig,
+      onReady: (data) => {
+        if (data.greeting) {
+          setMessages((prev) => [...prev, { role: 'tutor', speaker: 'Agnes', message: data.greeting }])
+          session.speak(data.greeting)
+        } else {
+          const fallbackAns = buildTutorResponse(`What should I know about ${firstTopic}?`, sessionConfig)
+          setMessages((prev) => [...prev, { role: 'tutor', speaker: 'Agnes', message: fallbackAns }])
+          session.speak(fallbackAns)
+        }
+        setInteractionState('idle')
+      },
+      onStatus: (s) => {
+        if (s === 'listening') setInteractionState('listening')
+        else if (s === 'processing') setInteractionState('processing')
+        else if (s === 'idle') setInteractionState('idle')
+      },
+      onTranscript: (data) => {
+        if (data.sender === 'assistant') {
+          setStreamingText('')
+          setMessages((prev) => [...prev, { role: 'tutor', speaker: 'Agnes', message: data.text }])
+          session.speak(data.text)
+        } else if (data.sender === 'user') {
+          setMessages((prev) => [...prev, { role: 'student', speaker: 'You', message: data.text }])
+        }
+      },
+      onToken: (token) => {
+        setStreamingText((prev) => prev + token)
+      },
+      onError: (msg) => {
+        setInteractionState('idle')
+        setError(msg)
+      },
+      onSpeakingChange: (speaking) => {
+        setIsSpeaking(speaking)
+        if (speaking) setInteractionState('speaking')
+      },
+    })
+    
+    sessionRef.current = session
+    session.connect()
   }
 
   function handleFollowUp(event) {
     event.preventDefault()
     const question = followUp.trim()
     if (!question || !activeSession) return
-
-    setMessages((currentMessages) => [
-      ...currentMessages,
-      { role: 'student', speaker: 'You', message: question },
-      {
-        role: 'tutor',
-        speaker: 'Voice Tutor',
-        message: buildTutorResponse(question, activeSession),
-      },
-    ])
     setFollowUp('')
-    setInteractionState('response')
+    askAssistant(question)
   }
 
   function handleModeChange(modeName) {
@@ -347,12 +398,12 @@ function VoiceAssistant() {
       <header className="voice-page-header">
         <div>
           <span className="voice-page-eyebrow">YOUR AI LEARNING COMPANION</span>
-          <h1>Voice Tutor</h1>
+          <h1>Agnes</h1>
           <p>Learn by talking, asking and explaining.</p>
         </div>
         <div className="voice-availability">
           <span aria-hidden="true" />
-          Mock tutor ready
+          Agnes is ready
         </div>
       </header>
 
@@ -517,16 +568,29 @@ function VoiceAssistant() {
             <small>{activeSession.difficulty} · {activeSession.style}</small>
           </div>
         )}
-        <button
-          aria-label={interactionState === 'listening' ? 'Finish speaking' : 'Start speaking'}
-          aria-pressed={interactionState === 'listening'}
-          className={`microphone-button microphone-${interactionState}`}
-          disabled={!activeSession || interactionState === 'processing'}
-          onClick={handleMicrophoneClick}
-          type="button"
-        >
-          <MicrophoneIcon />
-        </button>
+        {isSpeaking ? (
+          <button
+            aria-label="Stop Agnes from speaking"
+            className="microphone-button microphone-speaking"
+            onClick={() => sessionRef.current?.stopSpeaking()}
+            type="button"
+          >
+            <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" style={{width: '24px', height: '24px'}}>
+              <rect x="6" y="6" width="12" height="12" rx="2" />
+            </svg>
+          </button>
+        ) : (
+          <button
+            aria-label={interactionState === 'listening' ? 'Stop listening' : 'Start speaking'}
+            aria-pressed={interactionState === 'listening'}
+            className={`microphone-button microphone-${interactionState}`}
+            disabled={!activeSession || interactionState === 'processing'}
+            onClick={handleMicrophoneClick}
+            type="button"
+          >
+            <MicrophoneIcon />
+          </button>
+        )}
         <div aria-live="polite" className="voice-state-copy">
           <strong>{stateLabels[interactionState]}</strong>
           <span>
@@ -572,9 +636,40 @@ function VoiceAssistant() {
                 key={`${message.role}-${index}`}
                 message={message}
                 onHelpful={setHelpful}
-                onPlay={() => setIsPlaying((playing) => !playing)}
+                onPlay={() => sessionRef.current?.speak(message.message)}
               />
             ))}
+            {streamingText && (
+              <article className="conversation-message message-tutor">
+                <div aria-hidden="true" className="message-avatar tutor-avatar">✦</div>
+                <div className="message-content">
+                  <div className="message-speaker">
+                    Agnes
+                    <span className="ai-badge">AGNES AI</span>
+                  </div>
+                  <p>
+                    {streamingText}
+                    <span className="vaw-cursor" style={{ marginLeft: "4px", display: "inline-block", width: "8px", height: "1em", backgroundColor: "currentColor", animation: "blink 1s step-end infinite" }} />
+                  </p>
+                </div>
+              </article>
+            )}
+            {error && (
+              <article className="conversation-message message-tutor">
+                <div aria-hidden="true" className="message-avatar tutor-avatar">✦</div>
+                <div className="message-content">
+                  <p style={{color: 'var(--color-danger)'}}><strong>Error:</strong> {error}</p>
+                </div>
+              </article>
+            )}
+            {interactionState === 'listening' && (
+              <article className="conversation-message message-student">
+                <div aria-hidden="true" className="message-avatar">S</div>
+                <div className="message-content">
+                  <p><em>Listening...</em></p>
+                </div>
+              </article>
+            )}
           </div>
 
           <form className="follow-up-form" onSubmit={handleFollowUp}>

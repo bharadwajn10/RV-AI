@@ -313,22 +313,40 @@ function VoiceAssistant() {
     setIsPlaying(false)
   }
 
-  function handleFollowUp(event) {
+  async function handleFollowUp(event) {
     event.preventDefault()
     const question = followUp.trim()
     if (!question || !activeSession) return
 
+    const newMessageIndex = messages.length + 1
+    
     setMessages((currentMessages) => [
       ...currentMessages,
       { role: 'student', speaker: 'You', message: question },
-      {
-        role: 'tutor',
-        speaker: 'Voice Tutor',
-        message: buildTutorResponse(question, activeSession),
-      },
+      { role: 'tutor', speaker: 'Voice Tutor', message: '' }
     ])
     setFollowUp('')
-    setInteractionState('response')
+    setInteractionState('processing')
+    
+    try {
+      const { sendVoiceTurn } = await import('../api.js')
+      await sendVoiceTurn(activeSession.topics[0], question, (chunk) => {
+        setInteractionState('response')
+        setMessages((msgs) => {
+          const newMsgs = [...msgs]
+          newMsgs[newMessageIndex].message += chunk
+          return newMsgs
+        })
+      })
+    } catch (err) {
+      console.error(err)
+      setInteractionState('response')
+      setMessages((msgs) => {
+        const newMsgs = [...msgs]
+        newMsgs[newMessageIndex].message = "Sorry, I couldn't connect to the backend API."
+        return newMsgs
+      })
+    }
   }
 
   function handleModeChange(modeName) {

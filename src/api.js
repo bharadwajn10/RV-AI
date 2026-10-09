@@ -105,3 +105,64 @@ export async function publishPlan(items) {
   if (!res.ok) throw new Error('Failed to publish plan')
   return (await res.json()).data
 }
+
+export async function suggestPath() {
+  const res = await fetch(`${API_BASE}/educator/paths/suggest`, {
+    method: 'POST',
+    headers: getEducatorAuthHeaders(),
+    body: JSON.stringify({ class_id: "ds-class-1" })
+  })
+  if (!res.ok) throw new Error('Failed to suggest path')
+  return (await res.json()).data
+}
+
+export async function changePath(text) {
+  const res = await fetch(`${API_BASE}/educator/paths/change`, {
+    method: 'POST',
+    headers: getEducatorAuthHeaders(),
+    body: JSON.stringify({ class_id: "ds-class-1", text })
+  })
+  if (!res.ok) throw new Error('Failed to change path')
+  return (await res.json()).data
+}
+
+export async function getConflicts() {
+  const res = await fetch(`${API_BASE}/educator/classes/ds-class-1/conflicts`, {
+    headers: getEducatorAuthHeaders()
+  })
+  if (!res.ok) throw new Error('Failed to get conflicts')
+  return (await res.json()).data
+}
+
+export async function overrideConflict(id) {
+  const res = await fetch(`${API_BASE}/educator/conflicts/${id}/override`, {
+    method: 'POST',
+    headers: getEducatorAuthHeaders()
+  })
+  if (!res.ok) throw new Error('Failed to override conflict')
+  return (await res.json()).data
+}
+
+export async function getKnowledgeGraph() {
+  const res = await fetch(`${API_BASE}/educator/classes/ds-class-1/knowledge-graph`, {
+    headers: getEducatorAuthHeaders()
+  })
+  if (!res.ok) throw new Error('Failed to get knowledge graph')
+  return (await res.json()).data
+}
+
+export async function getNextActions() {
+  const res = await fetch(`${API_BASE}/educator/classes/ds-class-1/next-actions`, {
+    headers: getEducatorAuthHeaders()
+  })
+  if (!res.ok) throw new Error('Failed to get next actions')
+  return (await res.json()).data
+}
+
+export async function getInterventionImpact() {
+  const res = await fetch(`${API_BASE}/educator/classes/ds-class-1/interventions/impact`, {
+    headers: getEducatorAuthHeaders()
+  })
+  if (!res.ok) throw new Error('Failed to get intervention impact')
+  return (await res.json()).data
+}

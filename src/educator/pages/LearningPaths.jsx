@@ -46,11 +46,60 @@ function LearningPaths() {
             Structured course plans with goals, pacing, prerequisites, and
             outcomes. These are sample AI-suggested paths for now.
           </p>
+          <SpecularButton 
+            type="button" 
+            className="primary-btn" 
+            style={{ marginTop: '1rem' }}
+            onClick={async () => {
+              try {
+                const { suggestPath, loginEducator } = await import("../../api.js");
+                if (!localStorage.getItem('educator_token')) await loginEducator();
+                const res = await suggestPath();
+                alert("Started suggestion job: " + res.job_id);
+              } catch (err) {
+                alert("Error: " + err.message);
+              }
+            }}
+          >
+            Suggest Plan from Materials
+          </SpecularButton>
         </div>
         <span className="learning-paths-count">
           {paths.length} sample paths
         </span>
       </header>
+
+      <div className="learning-path-change-box" style={{ padding: '1rem', background: 'var(--surface-color)', borderRadius: '8px', marginBottom: '1.5rem', border: '1px solid var(--border-color)' }}>
+        <h3 style={{ fontSize: '0.875rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Describe a requirement change</h3>
+        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+          <input 
+            type="text" 
+            id="change-input"
+            placeholder="e.g. Exam moved to Friday, add new topic on Graphs..." 
+            style={{ flex: 1, padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-primary)' }}
+          />
+          <button 
+            type="button" 
+            style={{ padding: '0.5rem', background: 'transparent', border: '1px solid var(--border-color)', borderRadius: '4px', cursor: 'pointer', color: 'var(--text-primary)' }}
+            onClick={async () => {
+              const input = document.getElementById('change-input');
+              const text = input.value.trim();
+              if (!text) return;
+              try {
+                const { changePath, loginEducator } = await import("../../api.js");
+                if (!localStorage.getItem('educator_token')) await loginEducator();
+                const res = await changePath(text);
+                alert("Proposed Change: " + JSON.stringify(res.proposed_change));
+                input.value = "";
+              } catch (err) {
+                alert("Error: " + err.message);
+              }
+            }}
+          >
+            <span aria-hidden="true">🎤</span> Voice / Submit
+          </button>
+        </div>
+      </div>
 
       <div className="learning-path-list">
         {paths.map((path) => (

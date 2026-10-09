@@ -125,6 +125,30 @@ function StudyMaterials() {
           <p>No materials yet. Choose a file to add your first resource.</p>
         </div>
       )}
+
+      {/* Conflicts Panel */}
+      <div className="upload-materials-heading" style={{ marginTop: '2rem' }}>
+        <div>
+          <h3>Conflicts</h3>
+          <p>Review contradictions found across uploaded materials.</p>
+        </div>
+        <SpecularButton 
+          type="button" 
+          onClick={async () => {
+            try {
+              const { getConflicts, loginEducator } = await import("../../api.js");
+              if (!localStorage.getItem('educator_token')) await loginEducator();
+              const res = await getConflicts();
+              console.log("Conflicts:", res);
+              alert(`Found ${res.conflicts?.length || 0} conflicts. (Check console for details)`);
+            } catch (err) {
+              alert("Error fetching conflicts: " + err.message);
+            }
+          }}
+        >
+          Load Conflicts
+        </SpecularButton>
+      </div>
     </section>
   );
 }

@@ -33,3 +33,9 @@ async def submit_answer(req: SubmitReq, ctx: AppContext = Depends(get_context)):
     from app.personalization.registry import call
     result = await call("submit_answer", ctx, req.model_dump())
     return success(result)
+
+@router.get("/notifications")
+async def get_notifications(ctx: AppContext = Depends(get_context)):
+    from app.personalization.registry import call
+    result = await call("get_notifications", ctx)
+    return success(result)

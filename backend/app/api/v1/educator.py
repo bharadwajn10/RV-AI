@@ -77,3 +77,102 @@ async def publish_plan(
     result = await call("publish_plan", ctx, payload)
     return success(result)
 
+class SuggestPathReq(BaseModel):
+    class_id: str
+
+@router.post("/paths/suggest")
+async def suggest_paths(
+    req: SuggestPathReq,
+    background_tasks: BackgroundTasks,
+    ctx: AppContext = Depends(get_context)
+):
+    from app.personalization.registry import call
+    result = await call("suggest_learning_paths", ctx, req.model_dump(), background_tasks=background_tasks)
+    return success(result)
+
+class ChangePathReq(BaseModel):
+    class_id: str
+    text: str
+
+@router.post("/paths/change")
+async def change_path(
+    req: ChangePathReq,
+    ctx: AppContext = Depends(get_context)
+):
+    from app.personalization.registry import call
+    result = await call("parse_educator_intent", ctx, req.model_dump())
+    return success(result)
+
+@router.get("/classes/{class_id}/conflicts")
+async def get_conflicts(
+    class_id: str,
+    ctx: AppContext = Depends(get_context)
+):
+    from app.personalization.registry import call
+    result = await call("list_conflicts", ctx, {"class_id": class_id})
+    return success(result)
+
+@router.post("/conflicts/{conflict_id}/override")
+async def override_conflict(
+    conflict_id: str,
+    ctx: AppContext = Depends(get_context)
+):
+    from app.personalization.registry import call
+    result = await call("override_conflict", ctx, {"conflict_id": conflict_id})
+    return success(result)
+@router.get("/classes/{class_id}/next-actions")
+async def get_next_actions(
+    class_id: str,
+    ctx: AppContext = Depends(get_context)
+):
+    from app.personalization.registry import call
+    result = await call("get_next_actions", ctx, {"class_id": class_id})
+    return success(result)
+
+@router.patch("/next-actions/{action_id}")
+async def update_next_action(
+    action_id: str,
+    payload: dict,
+    ctx: AppContext = Depends(get_context)
+):
+    from app.personalization.registry import call
+    result = await call("update_next_action", ctx, {"action_id": action_id, **payload})
+    return success(result)
+
+@router.get("/classes/{class_id}/interventions")
+async def get_interventions(
+    class_id: str,
+    ctx: AppContext = Depends(get_context)
+):
+    from app.personalization.registry import call
+    result = await call("get_interventions", ctx, {"class_id": class_id})
+    return success(result)
+
+@router.get("/classes/{class_id}/interventions/impact")
+async def get_intervention_impact(
+    class_id: str,
+    ctx: AppContext = Depends(get_context)
+):
+    from app.personalization.registry import call
+    result = await call("get_intervention_impact", ctx, {"class_id": class_id})
+    return success(result)
+
+@router.post("/classes/{class_id}/interventions")
+async def create_intervention(
+    class_id: str,
+    payload: dict,
+    ctx: AppContext = Depends(get_context)
+):
+    from app.personalization.registry import call
+    result = await call("create_intervention", ctx, {"class_id": class_id, **payload})
+    return success(result)
+
+@router.get("/classes/{class_id}/knowledge-graph")
+async def get_knowledge_graph(
+    class_id: str,
+    learner_id: str = None,
+    ctx: AppContext = Depends(get_context)
+):
+    from app.personalization.registry import call
+    result = await call("get_knowledge_graph", ctx, {"class_id": class_id, "learner_id": learner_id})
+    return success(result)

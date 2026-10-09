@@ -5,3 +5,6 @@ from . import educator_drafts
 from . import educator_paths
 from . import learner_voice
 from . import learner_submit
+from . import educator_conflicts
+from . import educator_actions
+from . import educator_graph

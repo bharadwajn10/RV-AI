@@ -27,3 +27,17 @@ async def get_dashboard(ctx: AppContext):
         quick_actions=[],
         learning_modes=[]
     ).model_dump()
+
+@feature("get_notifications", roles=("learner",))
+async def get_notifications(ctx: AppContext):
+    # Mocking notifications for demo
+    return {
+        "notifications": [
+            {
+                "id": "notif-1",
+                "kind": "check_in",
+                "body": "Hi Alex, I noticed you've been inactive for a few days. Let me know if you need help with Trees!",
+                "created_at": "2026-10-09T10:00:00Z"
+            }
+        ]
+    }
